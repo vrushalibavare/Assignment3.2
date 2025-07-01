@@ -26,8 +26,30 @@ locals {
 }
 
 resource "aws_s3_bucket" "s3_tf" {
+  # checkov:skip=CKV2_AWS_62 Reason: Event notifications not required for this bucket
+  # checkov:skip=CKV_AWS_18 Reason: Access logging not required for this bucket
+  # checkov:skip=CKV_AWS_144 Reason: Cross-region replication not required for this bucket
+  # checkov:skip=CKV_AWS_145 Reason: KMS encryption not required for this bucket
   bucket = "${local.name_prefix}-s3-tf-bkt-${local.account_id}"
+  versioning_configuration {
+    enabled = true
+    
+  }
+  lifecycle_rule {
+    id      = "expire-objects"
+    enabled = true
+
+    expiration {
+      days = 365
+    }
+  }
 }
 
-
+resource "aws_s3_bucket_public_access_block" "s3_tf_block" {
+  bucket                  = aws_s3_bucket.s3_tf.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
 
